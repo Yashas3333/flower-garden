@@ -32,6 +32,8 @@
 html, body {
     padding: 0;
     margin: 0;
+    width: 100%;
+    overflow-x: hidden;
     display: flex;
     background-color: var(--bg-color);
     font-family: var(--font-sans);
@@ -43,7 +45,7 @@ html, body {
 
 .container {
     position: relative; /* change from fixed */
-    width: 100%;
+    width: 100vw;
     height: 100dvh; /* dynamic viewport height (NEW FIX) */
     min-height: 100svh; /* fallback */
     overflow: hidden;
@@ -308,4 +310,5 @@ button.active {
         font-size: 1.2rem;
     }
 }
+
 
