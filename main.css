@@ -38,8 +38,8 @@ html, body {
     background-color: var(--bg-color);
     font-family: var(--font-sans);
     color: var(--text-color);
-    justuy-content:center;
-    align-itemds:center;
+    justify-content: center;   /* FIXED */
+    align-items: center;       /* FIXED */
     height: 100vh;
 }
 
@@ -134,10 +134,23 @@ canvas {
 }
 
 /* UI Controls - Centered Bottom */
-.controls {
+
     .controls {
     position: absolute;
     bottom: calc(1.5rem + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: row;
+    gap: 1.2rem;
+    z-index: 20;
+    opacity: 0;
+    animation: fadeInUp 1s ease-out 0.8s forwards;
+    width: auto;
+    padding: 0.8rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 60px;
+    backdrop-filter: blur(2px);
 }
     /* Nice spacing from bottom */
     left: 50%;
@@ -310,5 +323,6 @@ button.active {
         font-size: 1.2rem;
     }
 }
+
 
 
