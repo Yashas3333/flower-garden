@@ -134,7 +134,7 @@ canvas {
 /* UI Controls - Centered Bottom */
 .controls {
     position: absolute;
-    bottom: 2.5rem;
+   bottom: calc(2.5rem + env(safe-area-inset-bottom));
     /* Nice spacing from bottom */
     left: 50%;
     transform: translateX(-50%);
@@ -297,5 +297,6 @@ button.active {
         /* Stretch buttons on mobile */
     }
 }
+
 
 
