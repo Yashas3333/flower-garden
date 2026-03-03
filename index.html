@@ -3,106 +3,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>A Garden for You</title>
-    <link rel="stylesheet" href="main.css">
+    <title>A Garden for You 🌸</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --accent-color: #ff8fa3;
+            --ui-glass: rgba(255, 255, 255, 0.1);
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            user-select: none; 
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            touch-action: none;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            pointer-events: none; /* Allows clicks to pass through to canvas */
+        }
+
+        .header { padding: 10px; transition: opacity 0.8s ease; }
+        .logo { font-family: 'Playfair Display', serif; font-size: 1.2rem; opacity: 0.8; }
+
+        .name { text-align: center; transition: opacity 0.8s ease; }
+        .text-line { display: block; font-size: 1rem; margin-bottom: 10px; opacity: 0.9; }
+
+        .text-highlight {
+            display: block;
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            background: linear-gradient(to right, #ff8fa3, #809eff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 15px 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            padding-bottom: 40px;
+            pointer-events: auto; /* Buttons remain clickable */
+        }
+
+        button {
+            background: var(--ui-glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
+        .fade-out { opacity: 0; pointer-events: none; }
+
+        @media (max-width: 400px) {
+            .text-highlight { font-size: 1.8rem; }
+            .controls { flex-direction: row; gap: 10px; }
+            button { padding: 10px 18px; font-size: 0.8rem; }
+        }
+    </style>
 </head>
 <body>
+
+    <canvas id="canvas"></canvas>
+
     <div class="container">
-        <canvas id="canvas"></canvas>
-        <header class="header">
+        <header class="header" id="header">
             <h1 class="logo">🌸 A Little peace for u Baby</h1>
         </header>
-        <div class="name">
+
+        <div class="name" id="nameBox">
             <span class="text-line">when the world feels heavy...</span>
             <span class="text-highlight">I'm here for u Always</span>
             <span class="text-line">✨ Tap to let the light back in</span>
         </div>
+
         <div class="controls">
-            <button class="clean-btn" id="cleanBtn">Clear Garden</button>
-            <button class="auto-btn" id="autoBtn">Auto Bloom</button>
+            <button id="cleanBtn">Clear Garden</button>
+            <button id="autoBtn">Auto Bloom</button>
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <script type="x-shader/x-vertex" id="vertexShader">
-        varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = vec4(position, 1.0);
+        }
     </script>
+
     <script type="x-shader/x-fragment" id="fragmentShader">
         precision highp float;
         varying vec2 vUv;
-        uniform float u_time;
-        uniform float u_ratio;
+        uniform float u_stop_time;
+        uniform vec2 u_stop_randomizer;
         uniform vec2 u_cursor;
-        uniform float u_stop_randomizer;
+        uniform float u_ratio;
+        uniform sampler2D u_texture;
+        uniform float u_clean;
 
-        float rand(vec2 n) { return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453); }
+        float rand(vec2 n) { 
+            return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
+        }
 
         void main() {
             vec2 uv = vUv;
-            uv.x *= u_ratio;
+            vec3 color = texture2D(u_texture, uv).rgb;
+            
             vec2 cursor = u_cursor;
+            uv.x *= u_ratio;
             cursor.x *= u_ratio;
+
             float dist = distance(uv, cursor);
+            float flower = smoothstep(0.12, 0.0, dist);
             
             vec3 flower_color;
-            float color_rand = rand(u_stop_randomizer);
-            if (color_rand < 0.25) flower_color = vec3(.98, .70, .75); // Soft Pink
-            else if (color_rand < 0.5) flower_color = vec3(.95, .60, .30); // Sunset Orange
-            else if (color_rand < 0.75) flower_color = vec3(.75, .60, .90); // Lavender
-            else flower_color = vec3(.4, .8, .9); // Sky Blue
+            float r = rand(u_stop_randomizer);
+            if (r < 0.25) flower_color = vec3(.98, .70, .75); // Soft Pink
+            else if (r < 0.5) flower_color = vec3(.95, .60, .30); // Orange
+            else if (r < 0.75) flower_color = vec3(.75, .60, .90); // Lavender
+            else flower_color = vec3(.4, .8, .9); // Blue
 
-            float strength = smoothstep(0.15, 0.0, dist);
-            gl_FragColor = vec4(flower_color * strength, strength);
+            color += (flower_color * flower * 0.7);
+            color *= u_clean;
+
+            gl_FragColor = vec4(color, 1.0);
         }
     </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <script>
-        const canvas = document.getElementById('canvas');
-        const scene = new THREE.Scene();
+        const canvasEl = document.querySelector('#canvas');
+        const cleanBtn = document.querySelector('#cleanBtn');
+        const autoBtn = document.querySelector('#autoBtn');
+        const nameBox = document.querySelector('#nameBox');
+        const header = document.querySelector('#header');
+
+        let isClean = true;
+        let isAutoBloom = false;
+        let autoBloomInterval = null;
+
+        const pointer = { x: 0.5, y: 0.5, clicked: false, vanishCanvas: false };
+
+        // THREE.JS SETUP
+        const sceneShader = new THREE.Scene();
+        const sceneBasic = new THREE.Scene();
         const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(window.innerWidth, window.innerHeight);
 
-        const uniforms = {
-            u_time: { value: 0 },
-            u_ratio: { value: window.innerWidth / window.innerHeight },
-            u_cursor: { value: new THREE.Vector2(-10, -10) },
-            u_stop_randomizer: { value: new THREE.Vector2(Math.random(), Math.random()) }
-        };
+        let renderTargets = [
+            new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight),
+            new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight)
+        ];
 
-        const material = new THREE.ShaderMaterial({
-            uniforms,
+        const shaderMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                u_stop_time: { value: 0 },
+                u_stop_randomizer: { value: new THREE.Vector2(Math.random(), Math.random()) },
+                u_cursor: { value: new THREE.Vector2(0.5, 0.5) },
+                u_ratio: { value: window.innerWidth / window.innerHeight },
+                u_texture: { value: null },
+                u_clean: { value: 1.0 }
+            },
             vertexShader: document.getElementById('vertexShader').textContent,
             fragmentShader: document.getElementById('fragmentShader').textContent,
             transparent: true
         });
 
-        scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material));
+        const basicMaterial = new THREE.MeshBasicMaterial();
+        const plane = new THREE.PlaneGeometry(2, 2);
+        sceneShader.add(new THREE.Mesh(plane, shaderMaterial));
+        sceneBasic.add(new THREE.Mesh(plane, basicMaterial));
 
-        function animate(time) {
-            uniforms.u_time.value = time * 0.001;
-            renderer.render(scene, camera);
-            requestAnimationFrame(animate);
+        function handleInteraction() {
+            if (isClean) {
+                nameBox.classList.add('fade-out');
+                header.classList.add('fade-out');
+                isClean = false;
+            }
         }
-        animate();
 
-        window.addEventListener('mousedown', (e) => {
-            uniforms.u_cursor.value.set(e.clientX / window.innerWidth, 1 - (e.clientY / window.innerHeight));
-            uniforms.u_stop_randomizer.value.set(Math.random(), Math.random());
+        // INPUT LOGIC
+        function updatePointer(x, y) {
+            handleInteraction();
+            pointer.clicked = true;
+            pointer.x = x / window.innerWidth;
+            pointer.y = 1 - (y / window.innerHeight);
+        }
+
+        window.addEventListener('mousedown', e => {
+            if (e.target.closest('button')) return;
+            updatePointer(e.clientX, e.clientY);
         });
 
-        window.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            uniforms.u_cursor.value.set(touch.clientX / window.innerWidth, 1 - (touch.clientY / window.innerHeight));
-            uniforms.u_stop_randomizer.value.set(Math.random(), Math.random());
+        window.addEventListener('touchstart', e => {
+            if (e.target.closest('button')) return;
+            updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+
+        // BUTTONS
+        cleanBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            pointer.vanishCanvas = true;
+            setTimeout(() => { 
+                pointer.vanishCanvas = false; 
+                isClean = true;
+                nameBox.classList.remove('fade-out');
+                header.classList.remove('fade-out');
+            }, 100);
         });
 
-        document.getElementById('cleanBtn').onclick = () => { location.reload(); };
-        document.getElementById('autoBtn').onclick = () => {
-            setInterval(() => {
-                uniforms.u_cursor.value.set(Math.random(), Math.random());
-                uniforms.u_stop_randomizer.value.set(Math.random(), Math.random());
-            }, 400);
-        };
+        autoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isAutoBloom = !isAutoBloom;
+            autoBtn.textContent = isAutoBloom ? "Stop Bloom" : "Auto Bloom";
+            if (isAutoBloom) {
+                autoBloomInterval = setInterval(() => {
+                    updatePointer(Math.random() * window.innerWidth, Math.random() * window.innerHeight);
+                }, 300);
+            } else {
+                clearInterval(autoBloomInterval);
+            }
+        });
+
+        function render() {
+            shaderMaterial.uniforms.u_clean.value = pointer.vanishCanvas ? 0.0 : 1.0;
+            shaderMaterial.uniforms.u_texture.value = renderTargets[0].texture;
+
+            if (pointer.clicked) {
+                shaderMaterial.uniforms.u_cursor.value.set(pointer.x, pointer.y);
+                shaderMaterial.uniforms.u_stop_randomizer.value.set(Math.random(), Math.random());
+                pointer.clicked = false;
+            }
+
+            renderer.setRenderTarget(renderTargets[1]);
+            renderer.render(sceneShader, camera);
+            basicMaterial.map = renderTargets[1].texture;
+            renderer.setRenderTarget(null);
+            renderer.render(sceneBasic, camera);
+
+            let tmp = renderTargets[0];
+            renderTargets[0] = renderTargets[1];
+            renderTargets[1] = tmp;
+
+            requestAnimationFrame(render);
+        }
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            renderer.setSize(w, h);
+            shaderMaterial.uniforms.u_ratio.value = w / h;
+            renderTargets[0].setSize(w, h);
+            renderTargets[1].setSize(w, h);
+        });
+
+        render();
     </script>
 </body>
 </html>
