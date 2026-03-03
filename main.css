@@ -118,7 +118,7 @@ canvas {
     color: transparent;
     opacity: 0;
     animation: fadeInUp 1s ease-out 0.4s forwards;
-    white-space: nowrap;
+    white-space: normal;
 }
 
 .hint {
@@ -297,4 +297,5 @@ button.active {
         /* Stretch buttons on mobile */
     }
 }
+
 
