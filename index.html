@@ -3,194 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>A Garden for You 🌸</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300&display=swap" rel="stylesheet">
-    
+    <title>A Little Peace for You 🌸</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #000000;
             --text-color: #ffffff;
             --accent-color: #ff8fa3;
             --ui-glass: rgba(255, 255, 255, 0.1);
+            --ui-border: rgba(255, 255, 255, 0.2);
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', sans-serif;
         }
 
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-            user-select: none; 
-            -webkit-touch-callout: none;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Inter', sans-serif;
             overflow: hidden;
+            background-color: #000;
+            font-family: var(--font-sans);
+            color: var(--text-color);
             height: 100vh;
             width: 100vw;
             touch-action: none;
         }
 
-        #canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-        }
+        #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
 
         .container {
-            position: relative;
-            z-index: 1;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 20px;
-            pointer-events: none; /* Allows clicks to pass through to canvas */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        .header { padding: 10px; transition: opacity 0.8s ease; }
-        .logo { font-family: 'Playfair Display', serif; font-size: 1.2rem; opacity: 0.8; }
+        .header {
+            position: absolute; top: 2rem; left: 2rem;
+            pointer-events: none; z-index: 10; transition: opacity 1s ease;
+        }
 
-        .name { text-align: center; transition: opacity 0.8s ease; }
-        .text-line { display: block; font-size: 1rem; margin-bottom: 10px; opacity: 0.9; }
+        .logo {
+            font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600;
+            opacity: 0; animation: fadeInDown 1s ease-out 0.5s forwards;
+        }
+
+        .name {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; pointer-events: none; z-index: 5;
+            display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+            transition: opacity 1s ease, transform 1s ease; width: 90%;
+        }
+
+        .text-line { font-size: 1.2rem; font-weight: 300; opacity: 0; animation: fadeInUp 1s ease-out 0.2s forwards; }
 
         .text-highlight {
-            display: block;
-            font-family: 'Playfair Display', serif;
-            font-size: 2.2rem;
-            background: linear-gradient(to right, #ff8fa3, #809eff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 15px 0;
+            font-family: var(--font-serif); font-size: 3.2rem; font-weight: 600;
+            background: linear-gradient(45deg, #ff8fa3, #a29bfe, #74b9ff, #fab1a0);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            opacity: 0; animation: fadeInUp 1s ease-out 0.4s forwards;
         }
 
         .controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            padding-bottom: 40px;
-            pointer-events: auto; /* Buttons remain clickable */
+            position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 1rem; z-index: 20; opacity: 0;
+            animation: fadeInUp 1s ease-out 0.8s forwards;
         }
 
         button {
-            background: var(--ui-glass);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            -webkit-tap-highlight-color: transparent;
+            background: var(--ui-glass); border: 1px solid var(--ui-border);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 0.8rem 1.8rem; border-radius: 50px;
+            font-family: var(--font-sans); font-size: 0.95rem; font-weight: 500;
+            color: var(--text-color); cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex; align-items: center; gap: 0.6rem; min-width: 140px; justify-content: center;
         }
 
-        button:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
-        .fade-out { opacity: 0; pointer-events: none; }
+        button:hover { transform: translateY(-4px); background: rgba(255, 255, 255, 0.2); }
+        button:active { transform: translateY(-1px) scale(0.98); }
+        button.active { background: var(--accent-color); border-color: var(--accent-color); box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3); }
 
-        @media (max-width: 400px) {
-            .text-highlight { font-size: 1.8rem; }
-            .controls { flex-direction: row; gap: 10px; }
-            button { padding: 10px 18px; font-size: 0.8rem; }
+        .fade-out { opacity: 0 !important; pointer-events: none; }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translate3d(-50%, 30px, 0); } to { opacity: 1; transform: translate3d(-50%, 0, 0); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translate3d(0, -30px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+
+        @media screen and (max-width: 768px) {
+            .text-highlight { font-size: 2.2rem; }
+            button { min-width: 110px; padding: 0.7rem 1rem; font-size: 0.85rem; }
         }
     </style>
 </head>
 <body>
 
-    <canvas id="canvas"></canvas>
-
     <div class="container">
-        <header class="header" id="header">
-            <h1 class="logo">🌸 A Little peace for u Baby</h1>
-        </header>
-
+        <canvas id="canvas"></canvas>
+        <header class="header" id="header"><h1 class="logo">🌸 A Little peace for u Baby</h1></header>
         <div class="name" id="nameBox">
             <span class="text-line">when the world feels heavy...</span>
             <span class="text-highlight">I'm here for u Always</span>
             <span class="text-line">✨ Tap to let the light back in</span>
         </div>
-
         <div class="controls">
-            <button id="cleanBtn">Clear Garden</button>
-            <button id="autoBtn">Auto Bloom</button>
+            <button id="cleanBtn"><span class="btn-icon">🧹</span> Clear</button>
+            <button id="autoBtn"><span class="btn-icon">✨</span> Auto Bloom</button>
         </div>
     </div>
 
     <script type="x-shader/x-vertex" id="vertexShader">
         varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = vec4(position, 1.0);
-        }
+        void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
     </script>
 
     <script type="x-shader/x-fragment" id="fragmentShader">
         precision highp float;
         varying vec2 vUv;
-        uniform float u_stop_time;
-        uniform vec2 u_stop_randomizer;
-        uniform vec2 u_cursor;
         uniform float u_ratio;
-        uniform sampler2D u_texture;
+        uniform vec2 u_cursor;
+        uniform float u_stop_time;
         uniform float u_clean;
+        uniform vec2 u_stop_randomizer;
+        uniform sampler2D u_texture;
 
-        float rand(vec2 n) { 
-            return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
+        float get_flower_shape(vec2 _p, float _pet_n, float _angle, float _outline) {
+            _angle *= 3.;
+            _p = vec2(_p.x * cos(_angle) - _p.y * sin(_angle), _p.x * sin(_angle) + _p.y * cos(_angle));
+            float a = atan(_p.y, _p.x);
+            float flower_sectoral_shape = pow(abs(sin(a * _pet_n)), .35) + .2;
+            float size = 0.05 + u_stop_randomizer[0] * 0.1;
+            float flower_radial_shape = pow(length(_p) / size, 1.8);
+            float grow_time = step(.25, u_stop_time) * pow(u_stop_time, .25);
+            return 1. - smoothstep(0., flower_sectoral_shape, _outline * flower_radial_shape / grow_time);
+        }
+
+        float get_stem_shape(vec2 _p, vec2 _uv, float _w, float _angle) {
+            _p.x -= _p.y * sin(_angle) * pow(3. * _uv.y, 2.0);
+            float stem_shape = smoothstep(-_w, 0., _p.x) * (1. - smoothstep(0., _w, _p.x));
+            return stem_shape * (smoothstep(0., 0.1, .035 -_p.y)) * (1. - step(.17, u_stop_time));
         }
 
         void main() {
-            vec2 uv = vUv;
-            vec3 color = texture2D(u_texture, uv).rgb;
-            
-            vec2 cursor = u_cursor;
-            uv.x *= u_ratio;
-            cursor.x *= u_ratio;
+            vec3 base = texture2D(u_texture, vUv).xyz;
+            vec2 uv = vUv; uv.x *= u_ratio;
+            vec2 cursor = vUv - u_cursor; cursor.x *= u_ratio;
 
-            float dist = distance(uv, cursor);
-            float flower = smoothstep(0.12, 0.0, dist);
-            
+            float color_type = floor(u_stop_randomizer[1] * 4.0);
             vec3 flower_color;
-            float r = rand(u_stop_randomizer);
-            if (r < 0.25) flower_color = vec3(.98, .70, .75); // Soft Pink
-            else if (r < 0.5) flower_color = vec3(.95, .60, .30); // Orange
-            else if (r < 0.75) flower_color = vec3(.75, .60, .90); // Lavender
-            else flower_color = vec3(.4, .8, .9); // Blue
+            if (color_type < 1.0) flower_color = vec3(.98, .70, .75); // Soft Pink
+            else if (color_type < 2.0) flower_color = vec3(.75, .60, .90); // Lavender
+            else if (color_type < 3.0) flower_color = vec3(.4, .8, .9); // Sky Blue
+            else flower_color = vec3(.95, .60, .30); // Sunset Orange
 
-            color += (flower_color * flower * 0.7);
-            color *= u_clean;
+            float angle = .5 * (u_stop_randomizer[0] - .5);
+            float stem = get_stem_shape(cursor, uv, .004, angle);
+            float flower = get_flower_shape(cursor, 5.0 + floor(u_stop_randomizer[0]*3.0), angle, 1.0);
 
-            gl_FragColor = vec4(color, 1.0);
+            vec3 color = base * (1.0 - flower * 1.5);
+            color += (stem * vec3(.2, .4, .2));
+            color += (flower * flower_color);
+            gl_FragColor = vec4(color * u_clean, 1.0);
         }
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
     <script>
         const canvasEl = document.querySelector('#canvas');
         const cleanBtn = document.querySelector('#cleanBtn');
         const autoBtn = document.querySelector('#autoBtn');
-        const nameBox = document.querySelector('#nameBox');
-        const header = document.querySelector('#header');
+        const nameEl = document.querySelector('#nameBox');
+        const headerEl = document.querySelector('#header');
 
-        let isClean = true;
-        let isAutoBloom = false;
-        let autoBloomInterval = null;
-
+        let isClean = true, isAutoBloom = false, autoBloomInterval = null;
         const pointer = { x: 0.5, y: 0.5, clicked: false, vanishCanvas: false };
 
-        // THREE.JS SETUP
-        const sceneShader = new THREE.Scene();
-        const sceneBasic = new THREE.Scene();
-        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-        const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, alpha: true });
+        let renderer = new THREE.WebGLRenderer({ canvas: canvasEl, alpha: true, antialias: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(window.innerWidth, window.innerHeight);
+
+        let sceneShader = new THREE.Scene(), sceneBasic = new THREE.Scene();
+        let camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10);
+        let clock = new THREE.Clock();
 
         let renderTargets = [
             new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight),
@@ -204,7 +196,7 @@
                 u_cursor: { value: new THREE.Vector2(0.5, 0.5) },
                 u_ratio: { value: window.innerWidth / window.innerHeight },
                 u_texture: { value: null },
-                u_clean: { value: 1.0 }
+                u_clean: { value: 1 }
             },
             vertexShader: document.getElementById('vertexShader').textContent,
             fragmentShader: document.getElementById('fragmentShader').textContent,
@@ -212,94 +204,60 @@
         });
 
         const basicMaterial = new THREE.MeshBasicMaterial();
-        const plane = new THREE.PlaneGeometry(2, 2);
-        sceneShader.add(new THREE.Mesh(plane, shaderMaterial));
-        sceneBasic.add(new THREE.Mesh(plane, basicMaterial));
+        const planeGeometry = new THREE.PlaneGeometry(2, 2);
+        sceneBasic.add(new THREE.Mesh(planeGeometry, basicMaterial));
+        sceneShader.add(new THREE.Mesh(planeGeometry, shaderMaterial));
 
         function handleInteraction() {
             if (isClean) {
-                nameBox.classList.add('fade-out');
-                header.classList.add('fade-out');
+                nameEl.classList.add('fade-out');
+                headerEl.classList.add('fade-out');
                 isClean = false;
             }
         }
 
-        // INPUT LOGIC
-        function updatePointer(x, y) {
-            handleInteraction();
-            pointer.clicked = true;
-            pointer.x = x / window.innerWidth;
-            pointer.y = 1 - (y / window.innerHeight);
-        }
-
         window.addEventListener('mousedown', e => {
             if (e.target.closest('button')) return;
-            updatePointer(e.clientX, e.clientY);
+            handleInteraction();
+            pointer.x = e.clientX / window.innerWidth;
+            pointer.y = e.clientY / window.innerHeight;
+            pointer.clicked = true;
         });
 
         window.addEventListener('touchstart', e => {
             if (e.target.closest('button')) return;
-            updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+            handleInteraction();
+            pointer.x = e.targetTouches[0].clientX / window.innerWidth;
+            pointer.y = e.targetTouches[0].clientY / window.innerHeight;
+            pointer.clicked = true;
         }, { passive: false });
 
-        // BUTTONS
-        cleanBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        cleanBtn.addEventListener('click', () => {
             pointer.vanishCanvas = true;
             setTimeout(() => { 
                 pointer.vanishCanvas = false; 
                 isClean = true;
-                nameBox.classList.remove('fade-out');
-                header.classList.remove('fade-out');
-            }, 100);
+                nameEl.classList.remove('fade-out');
+                headerEl.classList.remove('fade-out');
+            }, 50);
         });
 
-        autoBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        autoBtn.addEventListener('click', () => {
             isAutoBloom = !isAutoBloom;
-            autoBtn.textContent = isAutoBloom ? "Stop Bloom" : "Auto Bloom";
+            autoBtn.classList.toggle('active');
             if (isAutoBloom) {
+                handleInteraction();
                 autoBloomInterval = setInterval(() => {
-                    updatePointer(Math.random() * window.innerWidth, Math.random() * window.innerHeight);
-                }, 300);
-            } else {
-                clearInterval(autoBloomInterval);
-            }
+                    pointer.x = Math.random(); pointer.y = Math.random(); pointer.clicked = true;
+                }, 400);
+            } else { clearInterval(autoBloomInterval); }
         });
 
         function render() {
-            shaderMaterial.uniforms.u_clean.value = pointer.vanishCanvas ? 0.0 : 1.0;
+            shaderMaterial.uniforms.u_clean.value = pointer.vanishCanvas ? 0 : 1;
             shaderMaterial.uniforms.u_texture.value = renderTargets[0].texture;
-
             if (pointer.clicked) {
-                shaderMaterial.uniforms.u_cursor.value.set(pointer.x, pointer.y);
+                shaderMaterial.uniforms.u_cursor.value.set(pointer.x, 1 - pointer.y);
                 shaderMaterial.uniforms.u_stop_randomizer.value.set(Math.random(), Math.random());
-                pointer.clicked = false;
-            }
-
-            renderer.setRenderTarget(renderTargets[1]);
-            renderer.render(sceneShader, camera);
-            basicMaterial.map = renderTargets[1].texture;
-            renderer.setRenderTarget(null);
-            renderer.render(sceneBasic, camera);
-
-            let tmp = renderTargets[0];
-            renderTargets[0] = renderTargets[1];
-            renderTargets[1] = tmp;
-
-            requestAnimationFrame(render);
-        }
-
-        window.addEventListener('resize', () => {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            renderer.setSize(w, h);
-            shaderMaterial.uniforms.u_ratio.value = w / h;
-            renderTargets[0].setSize(w, h);
-            renderTargets[1].setSize(w, h);
-        });
-
-        render();
-    </script>
-</body>
-</html>
+                shaderMaterial.uniforms.u_stop_time.value = 0;
+                pointer.clicked
