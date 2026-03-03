@@ -24,6 +24,85 @@
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="main.js"></script>
+    <script type="x-shader/x-vertex" id="vertexShader">
+        varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
+    </script>
+    <script type="x-shader/x-fragment" id="fragmentShader">
+        precision highp float;
+        varying vec2 vUv;
+        uniform float u_time;
+        uniform float u_ratio;
+        uniform vec2 u_cursor;
+        uniform float u_stop_randomizer;
+
+        float rand(vec2 n) { return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453); }
+
+        void main() {
+            vec2 uv = vUv;
+            uv.x *= u_ratio;
+            vec2 cursor = u_cursor;
+            cursor.x *= u_ratio;
+            float dist = distance(uv, cursor);
+            
+            vec3 flower_color;
+            float color_rand = rand(u_stop_randomizer);
+            if (color_rand < 0.25) flower_color = vec3(.98, .70, .75); // Soft Pink
+            else if (color_rand < 0.5) flower_color = vec3(.95, .60, .30); // Sunset Orange
+            else if (color_rand < 0.75) flower_color = vec3(.75, .60, .90); // Lavender
+            else flower_color = vec3(.4, .8, .9); // Sky Blue
+
+            float strength = smoothstep(0.15, 0.0, dist);
+            gl_FragColor = vec4(flower_color * strength, strength);
+        }
+    </script>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const uniforms = {
+            u_time: { value: 0 },
+            u_ratio: { value: window.innerWidth / window.innerHeight },
+            u_cursor: { value: new THREE.Vector2(-10, -10) },
+            u_stop_randomizer: { value: new THREE.Vector2(Math.random(), Math.random()) }
+        };
+
+        const material = new THREE.ShaderMaterial({
+            uniforms,
+            vertexShader: document.getElementById('vertexShader').textContent,
+            fragmentShader: document.getElementById('fragmentShader').textContent,
+            transparent: true
+        });
+
+        scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material));
+
+        function animate(time) {
+            uniforms.u_time.value = time * 0.001;
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        window.addEventListener('mousedown', (e) => {
+            uniforms.u_cursor.value.set(e.clientX / window.innerWidth, 1 - (e.clientY / window.innerHeight));
+            uniforms.u_stop_randomizer.value.set(Math.random(), Math.random());
+        });
+
+        window.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            uniforms.u_cursor.value.set(touch.clientX / window.innerWidth, 1 - (touch.clientY / window.innerHeight));
+            uniforms.u_stop_randomizer.value.set(Math.random(), Math.random());
+        });
+
+        document.getElementById('cleanBtn').onclick = () => { location.reload(); };
+        document.getElementById('autoBtn').onclick = () => {
+            setInterval(() => {
+                uniforms.u_cursor.value.set(Math.random(), Math.random());
+                uniforms.u_stop_randomizer.value.set(Math.random(), Math.random());
+            }, 400);
+        };
+    </script>
 </body>
 </html>
