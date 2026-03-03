@@ -29,24 +29,22 @@
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-html,
-body {
-    overflow: hidden;
+html, body {
     padding: 0;
     margin: 0;
     background-color: var(--bg-color);
     font-family: var(--font-sans);
     color: var(--text-color);
+    height: 100%;
 }
 
 .container {
-    position: fixed;
-    top: 0;
-    left: 0;
+    position: relative; /* change from fixed */
     width: 100%;
-    height: calc(var(--vh) * 100);
-    min-height: 100vh;
+    height: 100dvh; /* dynamic viewport height (NEW FIX) */
+    min-height: 100svh; /* fallback */
     overflow: hidden;
+
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -55,8 +53,7 @@ body {
 
 canvas {
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
     display: block;
@@ -133,8 +130,10 @@ canvas {
 
 /* UI Controls - Centered Bottom */
 .controls {
+    .controls {
     position: absolute;
-   bottom: calc(2.5rem + env(safe-area-inset-bottom));
+    bottom: calc(1.5rem + env(safe-area-inset-bottom));
+}
     /* Nice spacing from bottom */
     left: 50%;
     transform: translateX(-50%);
@@ -296,7 +295,13 @@ button.active {
         flex: 1;
         /* Stretch buttons on mobile */
     }
+    
+}@media (max-height: 700px) {
+    .text-highlight {
+        font-size: 2.3rem;
+    }
+
+    .text-line {
+        font-size: 1.2rem;
+    }
 }
-
-
-
