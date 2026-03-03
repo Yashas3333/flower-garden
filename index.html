@@ -3,52 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Our Garden 🌸</title>
+    <meta name="description" content="flower Garden">
+    <title>Flower Garden</title>
     <link rel="stylesheet" href="main.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400&display=swap" rel="stylesheet">
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-
     <div class="container">
-        <header class="header" id="header">
-            <h1 class="logo">🌸 A little peace for You</h1>
+        <canvas id="canvas"></canvas>
+        <div class="particles" id="particles"></div>
+        <header class="header">
+            <h1 class="logo">🌸 A little peace for You </h1>
         </header>
 
-        <div class="name" id="nameBox">
+        <div class="name">
             <span class="text-line">When the world feels too heavy...</span>
             <span class="text-highlight">I'm here for u always</span>
             <span class="text-line">✨ Tap to let the light back in</span>
         </div>
 
         <div class="controls">
-            <button id="cleanBtn">🧹 Clear</button>
-            <button id="autoBtn">✨ Auto</button>
+            <button class="clean-btn" id="cleanBtn">
+                <span class="btn-icon">🧹</span>
+                <span class="btn-text">Clear Garden</span>
+            </button>
+            <button class="auto-btn" id="autoBtn">
+                <span class="btn-icon">✨</span>
+                <span class="btn-text">Auto Bloom</span>
+            </button>
         </div>
+
+        <footer class="footer">
+            <span>Made with 💖 | Tap to grow OUR GARDEN</span>
+        </footer>
     </div>
 
-    <script type="x-shader/x-vertex" id="vertexShader">
-        varying vec2 vUv;
-        void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
-    </script>
-
     <script type="x-shader/x-fragment" id="fragmentShader">
-        precision highp float;
-        varying vec2 vUv;
+        #define PI 3.14159265359
         uniform float u_ratio;
         uniform vec2 u_cursor;
         uniform float u_stop_time;
         uniform float u_clean;
         uniform vec2 u_stop_randomizer;
+        uniform float u_theme;
         uniform sampler2D u_texture;
+        varying vec2 vUv;
 
         vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
         vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
         vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
         float snoise(vec2 v) {
-            const vec4 C = vec4(0.211324, 0.366025, -0.577350, 0.024390);
+            const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
             vec2 i = floor(v + dot(v, C.yy));
             vec2 x0 = v - i + dot(i, C.xx);
             vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
@@ -61,9 +68,8 @@
             vec3 h = abs(x) - 0.5;
             vec3 ox = floor(x + 0.5);
             vec3 a0 = x - ox;
-            m *= 1.7928 - 0.8537 * (a0*a0 + h*h);
-            vec3 g; g.x = a0.x * x0.x + h.x * x0.y;
-            g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+            m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+            vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw;
             return 130.0 * dot(m, g);
         }
 
@@ -71,34 +77,56 @@
             _angle *= 3.;
             _p = vec2(_p.x * cos(_angle) - _p.y * sin(_angle), _p.x * sin(_angle) + _p.y * cos(_angle));
             float a = atan(_p.y, _p.x);
-            float flower_sectoral_shape = pow(abs(sin(a * _pet_n)), .35) + .2;
-            float size = 0.04 + u_stop_randomizer[0] * 0.08;
+            float flower_sectoral_shape = pow(abs(sin(a * _pet_n)), .35) + .2 + (0.15 * sin(a * _pet_n * 2.0));
+            float size = .04 + u_stop_randomizer[0] * .12;
             float flower_radial_shape = pow(length(_p) / size, 1.8);
+            flower_radial_shape -= .12 * sin(8. * a + u_stop_randomizer[1] * 6.28);
+            flower_radial_shape = max(.08, flower_radial_shape);
+            flower_radial_shape += smoothstep(0., 0.025, -_p.y + .18 * abs(_p.x));
             float grow_time = step(.25, u_stop_time) * pow(u_stop_time, .25);
             return 1. - smoothstep(0., flower_sectoral_shape, _outline * flower_radial_shape / grow_time);
         }
 
         float get_stem_shape(vec2 _p, vec2 _uv, float _w, float _angle) {
             _w = max(.003, _w);
-            _p.x -= _p.y * sin(_angle) * pow(3. * _uv.y, 2.);
-            _p.x += 0.4 * snoise(2.5 * _uv * u_stop_randomizer[0]) * pow(length(_p.y), .5);
-            float stem = smoothstep(-_w, 0., _p.x) * (1. - smoothstep(0., _w, _p.x));
-            float grow_mask = smoothstep(0., pow(1. - smoothstep(0., .18, u_stop_time), .45), .035 - _p.y);
-            return stem * grow_mask * (1. - step(.17, u_stop_time));
+            _p.x -= _p.y * sin(_angle) * pow(3. * _uv.y, 2.0);
+            _p.x += .4 * snoise(2.5 * _uv * u_stop_randomizer[0]) * pow(dot(_p.y, _p.y), .5) * pow(dot(_uv.y, _uv.y), .25);
+            float stem_shape = smoothstep(-_w, 0., _p.x) * (1. - smoothstep(0., _w, _p.x));
+            stem_shape *= smoothstep(0., pow(1. - smoothstep(0., .18, u_stop_time), .45), .035 -_p.y);
+            return stem_shape * (1. - step(.17, u_stop_time));
+        }
+
+        float get_leaf_shape(vec2 p, float angle, float size) {
+            float a = atan(p.y, p.x) + angle;
+            float r = length(p);
+            float leaf_curve = sin(a * 2.0 + (sin(a * 15.0) * 0.1)) * 0.5 + 0.5;
+            float taper = smoothstep(size, 0.0, r) * smoothstep(0.0, size * 0.2, r);
+            float leaf = leaf_curve * taper * step(0.0, sin(a));
+            return max(0.0, leaf + snoise(p * 20.0) * 0.1 * leaf) * 0.8;
         }
 
         void main() {
             vec3 base = texture2D(u_texture, vUv).xyz;
             vec2 uv = vUv; uv.x *= u_ratio;
-            vec2 cursor = vUv - u_cursor; cursor.x *= u_ratio;
+            vec2 cursor = vUv - u_cursor.xy; cursor.x *= u_ratio;
+            vec3 stem_col = mix(vec3(.15 + u_stop_randomizer[0] * .4, .65, .25), vec3(.1, .45, .15), u_theme);
             float color_type = floor(u_stop_randomizer[1] * 4.0);
-            vec3 f_col = (color_type < 1.) ? vec3(.98, .7, .75) : (color_type < 2.) ? vec3(.95, .6, .3) : (color_type < 3.) ? vec3(.75, 0.4, .9) : vec3(.4, .8, .9);
-            float stem = get_stem_shape(cursor, vUv, .004, .5 * (u_stop_randomizer[0] - .5));
-            float flower = get_flower_shape(cursor, 5. + floor(u_stop_randomizer[1]*3.), u_stop_randomizer[0]*6., 1.0);
-            vec3 color = base * (1.0 - stem) + (stem * vec3(.2, .5, .2));
-            color = color * (1.0 - flower) + (flower * f_col);
-            gl_FragColor = vec4(color * u_clean, 1.0);
+            vec3 f_col = (color_type < 1.) ? vec3(.98, .7, .75) : (color_type < 2.) ? vec3(.95, .6, .3) : (color_type < 3.) ? vec3(.75, 0., .2) : vec3(.4, .8, .9);
+            float angle = .5 * (u_stop_randomizer[0] - .5);
+            float stem = get_stem_shape(cursor, uv, .004, angle) + get_stem_shape(cursor + vec2(0., .22 + .4 * u_stop_randomizer[0]), uv, .003, angle);
+            stem += get_leaf_shape(cursor + vec2(0.02, 0.08), angle + 0.5, 0.02) + get_leaf_shape(cursor + vec2(-0.02, 0.12), angle - 0.5, 0.015);
+            float f_back = get_flower_shape(cursor, 2. + floor(u_stop_randomizer[0] * 3.), angle - (2. * step(0., angle) - 1.) * .08 * u_stop_time, 1.4);
+            float f_front = get_flower_shape(cursor, 3. + floor(u_stop_randomizer[1] * 3.), angle, 1.);
+            vec3 color = base * (1. - (get_stem_shape(cursor, uv, .005, angle) + get_flower_shape(cursor, 2. + floor(u_stop_randomizer[0] * 3.), angle, 1.5) + get_flower_shape(cursor, 3. + floor(u_stop_randomizer[1] * 3.), angle, .92)));
+            color += (stem * stem_col) + (f_back * f_col * 0.7) + (f_front * f_col);
+            color += vec3(1.0, 0.95, 0.7) * (smoothstep(1.5, 0.0, length(cursor) * 15.0) * f_front) * 0.4 * step(0.3, u_stop_time);
+            gl_FragColor = vec4(color * u_clean, 1.);
         }
+    </script>
+
+    <script type="x-shader/x-vertex" id="vertexShader">
+        varying vec2 vUv;
+        void main() { vUv = uv; gl_Position = vec4(position, 1.); }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="main.js"></script>
