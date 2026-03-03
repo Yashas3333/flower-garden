@@ -1,89 +1,126 @@
 const canvasEl = document.querySelector('#canvas');
-const cleanBtn = document.querySelector('#cleanBtn'), autoBtn = document.querySelector('#autoBtn');
-const nameBox = document.querySelector('#nameBox'), header = document.querySelector('#header');
+const cleanBtn = document.querySelector('#cleanBtn');
+const autoBtn = document.querySelector('#autoBtn');
+const nameEl = document.querySelector('.name');
+const headerEl = document.querySelector('.header');
 
-let isClean = true, isAuto = false, autoInterval;
-const pointer = { x: 0.5, y: 0.5, clicked: false, clean: 1.0 };
+let isClean = true, isAutoBloom = false, autoBloomInterval = null;
+const pointer = { x: 0.66, y: 0.3, clicked: true, vanishCanvas: false };
 
-const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, preserveDrawingBuffer: false });
+let renderer = new THREE.WebGLRenderer({ canvas: canvasEl, alpha: true, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
 
-const sceneShader = new THREE.Scene(), sceneBasic = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), clock = new THREE.Clock();
+let sceneShader = new THREE.Scene(), sceneBasic = new THREE.Scene();
+let camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10), clock = new THREE.Clock();
 
-let targets = [
-    new THREE.WebGLRenderTarget(window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio()),
-    new THREE.WebGLRenderTarget(window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio())
+let renderTargets = [
+    new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight),
+    new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight),
 ];
 
-const shaderMat = new THREE.ShaderMaterial({
-    uniforms: { 
-        u_ratio: { value: window.innerWidth / window.innerHeight }, 
-        u_cursor: { value: new THREE.Vector2(0.5, 0.5) }, 
-        u_stop_time: { value: 0 }, 
-        u_clean: { value: 1.0 }, 
-        u_stop_randomizer: { value: new THREE.Vector2(0.5, 0.5) }, 
-        u_texture: { value: null } 
-    },
-    vertexShader: document.getElementById('vertexShader').textContent,
-    fragmentShader: document.getElementById('fragmentShader').textContent
-});
+let shaderMaterial, basicMaterial;
+createPlane();
+updateSize();
 
-sceneShader.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), shaderMat));
-const basicMat = new THREE.MeshBasicMaterial();
-sceneBasic.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), basicMat));
+window.addEventListener('resize', updateSize);
 
-function handleInput(x, y) {
-    if (isClean) { nameBox.classList.add('fade-out'); header.classList.add('fade-out'); isClean = false; }
-    pointer.x = x / window.innerWidth; 
-    pointer.y = 1 - (y / window.innerHeight); 
-    pointer.clicked = true;
+function updateSize() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    renderer.setSize(width, height);
+    // CRITICAL FIX: Resize render targets so drawing isn't cut off
+    renderTargets[0].setSize(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
+    renderTargets[1].setSize(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
+    
+    if (shaderMaterial) shaderMaterial.uniforms.u_ratio.value = width / height;
 }
 
-window.addEventListener('pointerdown', e => { 
-    if(!e.target.closest('button')) handleInput(e.clientX, e.clientY); 
+function handleInteraction() {
+    if (isClean) {
+        nameEl.classList.add('fade-out');
+        headerEl.classList.add('fade-out');
+        isClean = false;
+    }
+}
+
+window.addEventListener('click', e => {
+    if (e.target.closest('button')) return;
+    handleInteraction();
+    pointer.x = e.pageX / window.innerWidth;
+    pointer.y = e.pageY / window.innerHeight;
+    pointer.clicked = true;
 });
 
-cleanBtn.onclick = () => { 
-    pointer.clean = 0.0; 
-    setTimeout(() => { 
-        pointer.clean = 1.0; isClean = true; 
-        nameBox.classList.remove('fade-out'); header.classList.remove('fade-out'); 
-    }, 100); 
-};
+window.addEventListener('touchstart', e => {
+    if (e.target.closest('button')) return;
+    handleInteraction();
+    pointer.x = e.targetTouches[0].pageX / window.innerWidth;
+    pointer.y = e.targetTouches[0].pageY / window.innerHeight;
+    pointer.clicked = true;
+});
 
-autoBtn.onclick = () => {
-    isAuto = !isAuto; autoBtn.classList.toggle('active');
-    if (isAuto) autoInterval = setInterval(() => handleInput(Math.random()*window.innerWidth, Math.random()*window.innerHeight), 600);
-    else clearInterval(autoInterval);
-};
+cleanBtn.addEventListener('click', () => {
+    pointer.vanishCanvas = true;
+    setTimeout(() => { pointer.vanishCanvas = false; isClean = true; nameEl.classList.remove('fade-out'); headerEl.classList.remove('fade-out'); }, 50);
+});
 
-function animate() {
-    shaderMat.uniforms.u_clean.value = pointer.clean;
-    shaderMat.uniforms.u_texture.value = targets[0].texture;
+autoBtn.addEventListener('click', () => {
+    isAutoBloom = !isAutoBloom;
+    autoBtn.classList.toggle('active');
+    if (isAutoBloom) {
+        handleInteraction();
+        autoBloomInterval = setInterval(() => {
+            pointer.x = Math.random(); pointer.y = Math.random(); pointer.clicked = true;
+        }, 400);
+    } else {
+        clearInterval(autoBloomInterval);
+    }
+});
+
+function createPlane() {
+    shaderMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            u_stop_time: { value: 0 },
+            u_stop_randomizer: { value: new THREE.Vector2(Math.random(), Math.random()) },
+            u_cursor: { value: new THREE.Vector2(pointer.x, pointer.y) },
+            u_ratio: { value: window.innerWidth / window.innerHeight },
+            u_texture: { value: null },
+            u_clean: { value: 1 },
+            u_theme: { value: 0.0 }
+        },
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById('fragmentShader').textContent,
+        transparent: true
+    });
+    basicMaterial = new THREE.MeshBasicMaterial();
+    const planeGeometry = new THREE.PlaneGeometry(2, 2);
+    sceneBasic.add(new THREE.Mesh(planeGeometry, basicMaterial));
+    sceneShader.add(new THREE.Mesh(planeGeometry, shaderMaterial));
+}
+
+function render() {
+    shaderMaterial.uniforms.u_clean.value = pointer.vanishCanvas ? 0 : 1;
+    shaderMaterial.uniforms.u_texture.value = renderTargets[0].texture;
+
     if (pointer.clicked) {
-        shaderMat.uniforms.u_cursor.value.set(pointer.x, pointer.y);
-        shaderMat.uniforms.u_stop_randomizer.value.set(Math.random(), Math.random());
-        shaderMat.uniforms.u_stop_time.value = 0;
+        shaderMaterial.uniforms.u_cursor.value.set(pointer.x, 1 - pointer.y);
+        shaderMaterial.uniforms.u_stop_randomizer.value.set(Math.random(), Math.random());
+        shaderMaterial.uniforms.u_stop_time.value = 0;
         pointer.clicked = false;
     }
-    shaderMat.uniforms.u_stop_time.value += clock.getDelta();
-    renderer.setRenderTarget(targets[1]);
+    shaderMaterial.uniforms.u_stop_time.value += clock.getDelta();
+
+    renderer.setRenderTarget(renderTargets[1]);
     renderer.render(sceneShader, camera);
-    basicMat.map = targets[1].texture;
+    basicMaterial.map = renderTargets[1].texture;
     renderer.setRenderTarget(null);
     renderer.render(sceneBasic, camera);
-    let tmp = targets[0]; targets[0] = targets[1]; targets[1] = tmp;
-    requestAnimationFrame(animate);
-}
-animate();
 
-window.addEventListener('resize', () => {
-    const w = window.innerWidth, h = window.innerHeight;
-    const dpr = renderer.getPixelRatio();
-    renderer.setSize(w, h);
-    shaderMat.uniforms.u_ratio.value = w / h;
-    targets[0].setSize(w * dpr, h * dpr); 
-    targets[1].setSize(w * dpr, h * dpr);
-});
+    let tmp = renderTargets[0];
+    renderTargets[0] = renderTargets[1];
+    renderTargets[1] = tmp;
+
+    requestAnimationFrame(render);
+}
+render();
