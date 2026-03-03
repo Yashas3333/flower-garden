@@ -2,52 +2,70 @@
     --bg-color: #000000;
     --text-color: #ffffff;
     --accent-color: #ff8fa3;
-    --ui-glass: rgba(255, 255, 255, 0.1);
-    --ui-border: rgba(255, 255, 255, 0.2);
     --font-serif: 'Playfair Display', serif;
-    --font-sans: 'Inter', sans-serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 body, html { 
-    overflow: hidden; background-color: #000; 
-    font-family: var(--font-sans); height: 100%; width: 100%; touch-action: none; 
+    overflow: hidden; 
+    background: #000; 
+    height: 100dvh; /* Uses Dynamic Viewport Height to prevent cutting off */
+    width: 100vw; 
+    font-family: 'Inter', sans-serif; 
+    touch-action: none; 
 }
 
-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+canvas { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+}
 
 .container { 
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    display: flex; flex-direction: column; align-items: center; justify-content: center; 
-    pointer-events: none; 
+    position: fixed; 
+    width: 100%; 
+    height: 100dvh; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    pointer-events: none;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-.header { position: absolute; top: 2rem; left: 2rem; z-index: 10; transition: opacity 1s ease; }
-.logo { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; color: #fff; }
+.header { position: absolute; top: 2rem; left: 1.5rem; z-index: 10; transition: 1s; }
+.logo { font-family: var(--font-serif); font-size: 1rem; color: #fff; opacity: 0.8; }
 
-.name { 
-    text-align: center; z-index: 5; display: flex; flex-direction: column; 
-    align-items: center; gap: 0.5rem; transition: all 1s ease; width: 90%; color: #fff; 
-}
-
-.text-line { font-size: 1.2rem; font-weight: 300; }
+.name { text-align: center; z-index: 5; transition: 1s; width: 85%; color: #fff; }
+.text-line { display: block; font-size: 1rem; font-weight: 300; margin-bottom: 0.5rem; }
 .text-highlight { 
-    font-family: var(--font-serif); font-size: 3rem; font-weight: 600; 
-    background: linear-gradient(45deg, #ffb7c5, #87ceeb, #d1b3ff); 
-    -webkit-background-clip: text; background-clip: text; color: transparent; 
+    display: block; font-family: var(--font-serif); font-size: 2.2rem; 
+    background: linear-gradient(45deg, #ffb7c5, #87ceeb); -webkit-background-clip: text; color: transparent; 
 }
 
 .controls { 
-    position: absolute; bottom: 3rem; display: flex; gap: 1rem; z-index: 20; 
+    position: absolute; 
+    bottom: 2.5rem; /* Raised slightly to avoid home bar */
+    display: flex; 
+    gap: 0.8rem; 
+    z-index: 20; 
     pointer-events: auto; 
 }
 
 button { 
-    background: var(--ui-glass); border: 1px solid var(--ui-border); backdrop-filter: blur(12px); 
-    padding: 0.8rem 1.5rem; border-radius: 50px; font-family: var(--font-sans); 
-    color: #fff; cursor: pointer; transition: 0.3s; font-size: 0.9rem;
+    background: rgba(255,255,255,0.15); 
+    border: 1px solid rgba(255,255,255,0.25); 
+    backdrop-filter: blur(15px); 
+    padding: 0.8rem 1.4rem; 
+    border-radius: 50px; 
+    color: #fff; 
+    cursor: pointer; 
+    font-size: 0.9rem; 
+    transition: 0.3s;
 }
 
-button.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); }
-.fade-out { opacity: 0 !important; pointer-events: none; }
+button.active { background: var(--accent-color); color: #000; font-weight: bold; }
+.fade-out { opacity: 0 !important; }
