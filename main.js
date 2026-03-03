@@ -5,15 +5,16 @@ const nameBox = document.querySelector('#nameBox'), header = document.querySelec
 let isClean = true, isAuto = false, autoInterval;
 const pointer = { x: 0.5, y: 0.5, clicked: false, clean: 1.0 };
 
-const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, preserveDrawingBuffer: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 const sceneShader = new THREE.Scene(), sceneBasic = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), clock = new THREE.Clock();
 
 let targets = [
-    new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight),
-    new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight)
+    new THREE.WebGLRenderTarget(window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio()),
+    new THREE.WebGLRenderTarget(window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio())
 ];
 
 const shaderMat = new THREE.ShaderMaterial({
@@ -34,11 +35,7 @@ const basicMat = new THREE.MeshBasicMaterial();
 sceneBasic.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), basicMat));
 
 function handleInput(x, y) {
-    if (isClean) { 
-        nameBox.classList.add('fade-out'); 
-        header.classList.add('fade-out'); 
-        isClean = false; 
-    }
+    if (isClean) { nameBox.classList.add('fade-out'); header.classList.add('fade-out'); isClean = false; }
     pointer.x = x / window.innerWidth; 
     pointer.y = 1 - (y / window.innerHeight); 
     pointer.clicked = true;
@@ -52,21 +49,14 @@ cleanBtn.onclick = () => {
     pointer.clean = 0.0; 
     setTimeout(() => { 
         pointer.clean = 1.0; isClean = true; 
-        nameBox.classList.remove('fade-out'); 
-        header.classList.remove('fade-out'); 
+        nameBox.classList.remove('fade-out'); header.classList.remove('fade-out'); 
     }, 100); 
 };
 
 autoBtn.onclick = () => {
-    isAuto = !isAuto;
-    autoBtn.classList.toggle('active');
-    if (isAuto) {
-        autoInterval = setInterval(() => {
-            handleInput(Math.random() * window.innerWidth, Math.random() * window.innerHeight);
-        }, 500);
-    } else {
-        clearInterval(autoInterval);
-    }
+    isAuto = !isAuto; autoBtn.classList.toggle('active');
+    if (isAuto) autoInterval = setInterval(() => handleInput(Math.random()*window.innerWidth, Math.random()*window.innerHeight), 600);
+    else clearInterval(autoInterval);
 };
 
 function animate() {
@@ -90,8 +80,10 @@ function animate() {
 animate();
 
 window.addEventListener('resize', () => {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    shaderMat.uniforms.u_ratio.value = window.innerWidth / window.innerHeight;
-    targets[0].setSize(window.innerWidth, window.innerHeight);
-    targets[1].setSize(window.innerWidth, window.innerHeight);
+    const w = window.innerWidth, h = window.innerHeight;
+    const dpr = renderer.getPixelRatio();
+    renderer.setSize(w, h);
+    shaderMat.uniforms.u_ratio.value = w / h;
+    targets[0].setSize(w * dpr, h * dpr); 
+    targets[1].setSize(w * dpr, h * dpr);
 });
