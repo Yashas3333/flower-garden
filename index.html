@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>A Little Peace for You 🌸</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div class="container">
+        <header class="header" id="header"><h1 class="logo">🌸 A Little Peace for u Baby</h1></header>
+        <div class="name" id="nameBox">
+            <span class="text-line">when the world feels heavy...</span>
+            <span class="text-highlight">I'm here for u Always</span>
+            <span class="text-line">✨ Tap to let the light back in</span>
+        </div>
+        <div class="controls">
+            <button id="cleanBtn">🧹 Clear</button>
+            <button id="autoBtn">✨ Auto</button>
+        </div>
+    </div>
+
+    <script type="x-shader/x-vertex" id="vertexShader">
+        varying vec2 vUv;
+        void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragmentShader">
+        precision highp float;
+        varying vec2 vUv;
+        uniform float u_ratio;
+        uniform vec2 u_cursor;
+        uniform float u_stop_time;
+        uniform float u_clean;
+        uniform vec2 u_stop_randomizer;
+        uniform sampler2D u_texture;
+
+        float get_flower_shape(vec2 _p, float _pet_n, float _angle, float _outline) {
+            _angle *= 3.;
+            _p = vec2(_p.x * cos(_angle) - _p.y * sin(_angle), _p.x * sin(_angle) + _p.y * cos(_angle));
+            float a = atan(_p.y, _p.x);
+            float flower_sectoral_shape = pow(abs(sin(a * _pet_n)), .4) + .25;
+            float size = 0.05 + u_stop_randomizer[0] * 0.12;
+            float flower_radial_shape = pow(length(_p) / size, 2.0);
+            float grow_time = step(.25, u_stop_time) * pow(u_stop_time, .3);
+            return 1. - smoothstep(0., flower_sectoral_shape, _outline * flower_radial_shape / grow_time);
+        }
+
+        void main() {
+            vec3 base = texture2D(u_texture, vUv).xyz;
+            vec2 uv = vUv; uv.x *= u_ratio;
+            vec2 cursor = vUv - u_cursor; cursor.x *= u_ratio;
+
+            float color_type = floor(u_stop_randomizer[1] * 4.0);
+            vec3 flower_color;
+            if (color_type < 1.0) flower_color = vec3(0.98, 0.71, 0.77); // Soft Pink
+            else if (color_type < 2.0) flower_color = vec3(0.95, 0.60, 0.30); // Sunset Orange
+            else if (color_type < 3.0) flower_color = vec3(0.75, 0.60, 0.90); // Lavender
+            else flower_color = vec3(0.40, 0.80, 0.90); // Sky Blue
+
+            float f = get_flower_shape(cursor, 5. + floor(u_stop_randomizer[0] * 5.0), u_stop_randomizer[0] * 6.28, 1.0);
+            float core = get_flower_shape(cursor, 5.0, 0.0, 5.0);
+            
+            vec3 color = base * (1.0 - f * 0.7); 
+            color += (f * flower_color * 0.9);
+            color += (core * flower_color * 0.4);
+
+            gl_FragColor = vec4(color * u_clean, 1.0);
+        }
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
